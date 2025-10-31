@@ -92,13 +92,15 @@ const ForceGraph = ({
     const tooltip = d3.select('body').append('div')
       .attr('class', 'tooltip')
       .style('position', 'absolute')
-      .style('padding', '10px')
-      .style('background', 'rgba(0, 0, 0, 0.8)')
-      .style('color', '#fff')
-      .style('border-radius', '5px')
+      .style('padding', '12px 16px')
+      .style('background', 'var(--surface)')
+      .style('color', 'var(--text-primary)')
+      .style('border-radius', '8px')
+      .style('border', '1px solid var(--border-light)')
+      .style('box-shadow', '0 2px 8px rgba(0,0,0,0.15)')
       .style('pointer-events', 'none')
       .style('opacity', 0)
-      .style('font-size', '12px')
+      .style('font-size', '13px')
       .style('max-width', '300px')
       .style('z-index', 1000);
 
@@ -195,62 +197,129 @@ const ForceGraph = ({
   }, [data, width, height, isCitation]);
 
   return (
-    <div style={{ marginBottom: '40px' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '10px', color: '#e0e0e0' }}>{title}</h2>
+    <div style={{ 
+      background: 'var(--surface)',
+      borderRadius: '8px',
+      border: '1px solid var(--border-light)',
+      padding: '20px',
+      boxShadow: '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)',
+      overflow: 'hidden'
+    }}>
+      <h3 style={{ 
+        margin: '0 0 16px 0', 
+        fontSize: '16px',
+        fontWeight: 500,
+        color: 'var(--text-primary)'
+      }}>
+        {title}
+      </h3>
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'flex-start',
-        gap: '20px'
+        gap: '20px',
+        flexWrap: 'nowrap'
       }}>
-        <svg 
-          ref={svgRef} 
-          width={width} 
-          height={height}
-          style={{ 
-            border: '1px solid #444',
-            background: '#0a0a0a',
-            borderRadius: '4px'
-          }}
-        />
+        <div style={{ flexShrink: 1, minWidth: 0 }}>
+          <svg 
+            ref={svgRef} 
+            width={width} 
+            height={height}
+            style={{ 
+              border: '1px solid var(--border-light)',
+              background: 'var(--background-secondary)',
+              borderRadius: '8px',
+              display: 'block',
+              maxWidth: '100%',
+              height: 'auto'
+            }}
+          />
+        </div>
         <div style={{ 
-          padding: '15px',
-          border: '1px solid #444',
-          borderRadius: '5px',
-          background: '#2a2a2a',
-          minWidth: '200px',
-          color: '#e0e0e0'
+          padding: '16px',
+          border: '1px solid var(--border-light)',
+          borderRadius: '8px',
+          background: 'var(--background-secondary)',
+          width: '240px',
+          flexShrink: 0
         }}>
-          <h3 style={{ marginTop: 0, fontSize: '16px', color: '#e0e0e0' }}>Legend</h3>
-          <div style={{ marginBottom: '15px' }}>
-            <strong>Communities: {data.communities}</strong>
-            <div style={{ marginTop: '10px' }}>
+          <h4 style={{ 
+            margin: '0 0 12px 0', 
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'var(--text-primary)'
+          }}>
+            Legend
+          </h4>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ 
+              fontSize: '13px',
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '8px'
+            }}>
+              Communities: {data.communities}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {Array.from({ length: Math.min(10, data.communities) }, (_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
                   <div style={{
-                    width: '20px',
-                    height: '20px',
+                    width: '16px',
+                    height: '16px',
                     backgroundColor: d3.schemeCategory10[i % 10],
-                    marginRight: '10px',
-                    border: '1px solid #555'
+                    marginRight: '8px',
+                    borderRadius: '3px',
+                    border: '1px solid var(--border-light)'
                   }} />
-                  <span style={{ fontSize: '14px' }}>Community {i}</span>
+                  <span style={{ 
+                    fontSize: '13px',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Community {i}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
-          <div style={{ fontSize: '13px', color: '#b0b0b0' }}>
-            <p><strong>Interactions:</strong></p>
-            <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+          <div style={{ 
+            fontSize: '13px', 
+            color: 'var(--text-secondary)',
+            borderTop: '1px solid var(--border-light)',
+            paddingTop: '12px'
+          }}>
+            <div style={{ 
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '6px'
+            }}>
+              Interactions
+            </div>
+            <ul style={{ 
+              paddingLeft: '16px', 
+              margin: 0,
+              lineHeight: '1.6'
+            }}>
               <li>Drag nodes to reposition</li>
               <li>Hover for details</li>
               <li>Scroll to zoom</li>
             </ul>
           </div>
-          <div style={{ fontSize: '13px', marginTop: '15px', color: '#b0b0b0' }}>
-            <p><strong>Stats:</strong></p>
-            <p>Nodes: {data.nodes.length}</p>
-            <p>Links: {data.links.length}</p>
+          <div style={{ 
+            fontSize: '13px', 
+            marginTop: '12px',
+            borderTop: '1px solid var(--border-light)',
+            paddingTop: '12px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ 
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '6px'
+            }}>
+              Statistics
+            </div>
+            <div>Nodes: {data.nodes.length}</div>
+            <div>Links: {data.links.length}</div>
           </div>
         </div>
       </div>
