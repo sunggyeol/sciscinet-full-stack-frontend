@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Loader2, AlertCircle, TrendingUp } from 'lucide-react';
 import ForceGraph from '../components/ForceGraph';
 import type { NetworkData } from '../types';
 
@@ -59,8 +60,10 @@ const Task1Page = ({ apiBaseUrl }: Task1PageProps) => {
         alignItems: 'center', 
         height: '400px',
         fontSize: '14px',
-        color: 'var(--text-secondary)'
+        color: 'var(--text-secondary)',
+        gap: '10px'
       }}>
+        <Loader2 className="animate-spin" size={20} />
         Loading visualizations...
       </div>
     );
@@ -75,7 +78,10 @@ const Task1Page = ({ apiBaseUrl }: Task1PageProps) => {
         borderRadius: '8px',
         color: 'var(--error)'
       }}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 500 }}>Error Loading Data</h3>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AlertCircle size={20} />
+          Error Loading Data
+        </h3>
         <p style={{ margin: 0, fontSize: '14px' }}>{error}</p>
         <p style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
           Make sure the backend server is running and data is cached
@@ -143,8 +149,12 @@ const Task1Page = ({ apiBaseUrl }: Task1PageProps) => {
             color: 'var(--text-primary)', 
             fontSize: '16px',
             fontWeight: 500,
-            letterSpacing: '0.25px'
+            letterSpacing: '0.25px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
+            <TrendingUp size={20} />
             Scalability Solution
           </h3>
           <p style={{ 

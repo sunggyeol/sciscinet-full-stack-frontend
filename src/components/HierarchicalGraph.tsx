@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 interface HierarchicalNode {
@@ -51,14 +51,23 @@ interface HierarchicalGraphProps {
   data: HierarchicalGraphData;
   width?: number;
   height?: number;
+  maxNodesPerCommunity?: number;
+  maxCommunityLabels?: number;
 }
 
 const HierarchicalGraph = ({ 
   data, 
   width = 1000, 
-  height = 1000 
+  height = 1000,
+  maxNodesPerCommunity = 20,
+  maxCommunityLabels = 30
 }: HierarchicalGraphProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [displayStats, setDisplayStats] = useState({
+    nodes: 0,
+    links: 0,
+    communities: 0
+  });
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
@@ -66,7 +75,9 @@ const HierarchicalGraph = ({
     console.log('HierarchicalGraph rendering with data:', {
       nodeCount: data.nodes.length,
       linkCount: data.links.length,
-      communities: data.total_communities
+      communities: data.total_communities,
+      maxNodesPerCommunity,
+      maxCommunityLabels
     });
 
     // Clear previous content
@@ -84,16 +95,61 @@ const HierarchicalGraph = ({
     // Color scale for communities
     const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // Filter nodes to a manageable number per community
-    const PER_COMMUNITY_LIMIT = 20;
+    // Build a connectivity map to understand which nodes have connections
+    const nodeConnections = new Map<string, Set<string>>();
+    data.links.forEach(link => {
+      if (!nodeConnections.has(link.source)) nodeConnections.set(link.source, new Set());
+      if (!nodeConnections.has(link.target)) nodeConnections.set(link.target, new Set());
+      nodeConnections.get(link.source)!.add(link.target);
+      nodeConnections.get(link.target)!.add(link.source);
+    });
+
+    // Enhanced node selection: prioritize connected nodes
     const groupedAll = d3.group(data.nodes, d => d.community);
-    const displayNodes = Array.from(groupedAll, ([, nodes]) => {
-      const byDegree = [...nodes].sort((a, b) => b.degree - a.degree);
-      return byDegree.slice(0, PER_COMMUNITY_LIMIT);
-    }).flat();
+    const communitiesArray = Array.from(groupedAll, ([communityId, nodes]) => ({
+      id: communityId,
+      nodes: nodes,
+      size: nodes.length
+    })).sort((a, b) => b.size - a.size);
+
+    // Filter to top N communities by size to reduce overwhelming number
+    const topCommunities = communitiesArray.slice(0, Math.min(50, communitiesArray.length));
+    
+    const displayNodes = topCommunities.flatMap(community => {
+      // Calculate allocation for this community
+      const minNodes = 5;
+      const maxNodes = Math.min(maxNodesPerCommunity, community.size);
+      const targetNodes = Math.max(minNodes, maxNodes);
+      
+      // Sort nodes by: 1) having connections, 2) degree, 3) citation count
+      const rankedNodes = community.nodes
+        .map(node => ({
+          node,
+          connectionCount: (nodeConnections.get(node.id)?.size || 0),
+          hasConnections: nodeConnections.has(node.id)
+        }))
+        .sort((a, b) => {
+          // First: prefer nodes with connections
+          if (a.hasConnections !== b.hasConnections) return b.hasConnections ? 1 : -1;
+          // Second: prefer nodes with more connections
+          if (a.connectionCount !== b.connectionCount) return b.connectionCount - a.connectionCount;
+          // Third: prefer high degree nodes
+          return b.node.degree - a.node.degree;
+        });
+      
+      return rankedNodes.slice(0, targetNodes).map(r => r.node);
+    });
 
     const displayNodeIds = new Set(displayNodes.map(n => n.id));
     const displayLinks = data.links.filter(l => displayNodeIds.has(l.source) && displayNodeIds.has(l.target));
+
+    // Update display statistics
+    const displayCommunityCount = new Set(displayNodes.map(n => n.community)).size;
+    setDisplayStats({
+      nodes: displayNodes.length,
+      links: displayLinks.length,
+      communities: displayCommunityCount
+    });
 
     // Create a hierarchical structure for d3.cluster
     const hierarchyData: HierarchyRoot = {
@@ -121,8 +177,9 @@ const HierarchicalGraph = ({
     const nodesById = new Map(root.leaves().map(d => [(d.data as HierarchyLeaf).name, d]));
     
     // Line generator for bundled links
+    // Lower beta = more bundling (0.85 provides good visual bundling)
     const line = d3.lineRadial<d3.HierarchyNode<HierarchyNodeData>>()
-        .curve(d3.curveBundle.beta(0.95))
+        .curve(d3.curveBundle.beta(0.85))
         .radius(d => d.y ?? 0)
         .angle(d => d.x ?? 0);
 
@@ -144,14 +201,14 @@ const HierarchicalGraph = ({
         }
       })
       .attr('fill', 'none')
-      .attr('stroke-width', 1)
+      .attr('stroke-width', 1.5)
       .attr('stroke', d => {
         return d.source_community === d.target_community 
           ? colorScale(d.source_community.toString())
-          : '#aaa';
+          : '#888';
       })
       .attr('stroke-opacity', d => 
-        d.source_community === d.target_community ? 0.4 : 0.15
+        d.source_community === d.target_community ? 0.6 : 0.3
       );
 
     // Draw nodes
@@ -198,9 +255,9 @@ const HierarchicalGraph = ({
 
           // Reset links
           links.attr('stroke-opacity', (l: any) => 
-            l.source_community === l.target_community ? 0.4 : 0.15
+            l.source_community === l.target_community ? 0.6 : 0.3
           )
-          .attr('stroke-width', 1);
+          .attr('stroke-width', 1.5);
 
           // Hide tooltip
           tooltip.transition().duration(500).style('opacity', 0);
@@ -213,11 +270,10 @@ const HierarchicalGraph = ({
         .attr("stroke-width", 1)
         .style('cursor', 'pointer');
     
-    // Determine which communities to label
+    // Determine which communities to label (using prop)
     const communityEntries = Array.from(d3.group(displayNodes, d => d.community), ([cid, nodes]) => ({ cid: Number(cid), size: nodes.length }))
         .sort((a, b) => b.size - a.size);
-    const MAX_LABELS = 30;
-    const labelAllowed = new Set(communityEntries.slice(0, MAX_LABELS).map(e => e.cid));
+    const labelAllowed = new Set(communityEntries.slice(0, maxCommunityLabels).map(e => e.cid));
 
     // Add labels for communities
     g.append("g")
@@ -269,8 +325,6 @@ const HierarchicalGraph = ({
       .style('fill', 'var(--text-primary)')
       .text('Citation Network');
 
-    const displayCommunityCount = new Set(displayNodes.map(n => n.community)).size;
-
     g.append('text')
       .attr('x', 0)
       .attr('y', 10)
@@ -285,12 +339,12 @@ const HierarchicalGraph = ({
       .attr('text-anchor', 'middle')
       .style('font-size', '13px')
       .style('fill', 'var(--text-secondary)')
-      .text(`${displayCommunityCount} communities`);
+      .text(`${displayStats.communities} communities`);
 
     return () => {
       tooltip.remove();
     };
-  }, [data, width, height]);
+  }, [data, width, height, maxNodesPerCommunity, maxCommunityLabels]);
 
   return (
     <div style={{ 
@@ -344,7 +398,7 @@ const HierarchicalGraph = ({
           border: '1px solid var(--border-light)',
           borderRadius: '8px',
           background: 'var(--background-secondary)',
-          width: '280px',
+          width: '240px',
           flexShrink: 0
         }}>
           <h4 style={{ 
@@ -353,52 +407,76 @@ const HierarchicalGraph = ({
             fontWeight: 500,
             color: 'var(--text-primary)'
           }}>
-            Key Features
+            Legend
           </h4>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ 
+              fontSize: '13px',
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '8px'
+            }}>
+              Displaying {displayStats.communities} of {data.total_communities} communities
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {Array.from({ length: Math.min(10, displayStats.communities) }, (_, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    backgroundColor: d3.schemeCategory10[i % 10],
+                    marginRight: '8px',
+                    borderRadius: '3px',
+                    border: '1px solid var(--border-light)'
+                  }} />
+                  <span style={{ 
+                    fontSize: '13px',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Community {i}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
           <div style={{ 
             fontSize: '13px', 
-            color: 'var(--text-secondary)', 
-            lineHeight: '1.6' 
+            color: 'var(--text-secondary)',
+            borderTop: '1px solid var(--border-light)',
+            paddingTop: '12px'
           }}>
-            <div style={{ marginBottom: '12px' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Edge Bundling</strong>
-              <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0' }}>
-                <li>Reduces visual clutter</li>
-                <li>Reveals connection patterns</li>
-                <li>Center routing for inter-community links</li>
-              </ul>
-            </div>
-            
-            <div style={{ marginBottom: '12px' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Radial Layout</strong>
-              <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0' }}>
-                <li>Circular node arrangement</li>
-                <li>Community-based grouping</li>
-                <li>Optimal space utilization</li>
-              </ul>
-            </div>
-
-            <div style={{ marginBottom: '12px' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Communities</strong>
-              <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0' }}>
-                <li>Colored arc boundaries</li>
-                <li>Clear labels (C0, C1, etc.)</li>
-                <li>Spatial clustering</li>
-              </ul>
-            </div>
-
             <div style={{ 
-              borderTop: '1px solid var(--border-light)',
-              paddingTop: '12px',
-              marginTop: '12px'
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '6px'
             }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Interactions</strong>
-              <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0' }}>
-                <li>Hover for node details</li>
-                <li>Link highlighting</li>
-                <li>Citation-based sizing</li>
-              </ul>
+              Interactions
             </div>
+            <ul style={{ 
+              paddingLeft: '16px', 
+              margin: 0,
+              lineHeight: '1.6'
+            }}>
+              <li>Hover for details</li>
+              <li>Link highlighting</li>
+            </ul>
+          </div>
+          <div style={{ 
+            fontSize: '13px', 
+            marginTop: '12px',
+            borderTop: '1px solid var(--border-light)',
+            paddingTop: '12px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ 
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              marginBottom: '6px'
+            }}>
+              Statistics
+            </div>
+            <div>Displaying {displayStats.nodes} of {data.nodes.length} nodes</div>
+            <div>Displaying {displayStats.links} of {data.links.length} links</div>
           </div>
         </div>
       </div>

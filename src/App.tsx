@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Network, Database, GitBranch } from 'lucide-react';
 import TaskNavigation from './components/TaskNavigation';
 import Task1Page from './pages/Task1Page';
 import Task2Page from './pages/Task2Page';
@@ -20,23 +21,28 @@ function App() {
         boxShadow: '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)'
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <h1 style={{ 
-            margin: 0,
-            fontSize: '22px',
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.5px'
-          }}>
-            SciSciNet Network Analysis
-          </h1>
-          <p style={{ 
-            margin: '4px 0 0 0',
-            fontSize: '14px',
-            color: 'var(--text-secondary)',
-            fontWeight: 400
-          }}>
-            Virginia Tech CS Research Publications
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Network size={28} strokeWidth={2} style={{ color: 'var(--accent-primary)' }} />
+            <div>
+              <h1 style={{ 
+                margin: 0,
+                fontSize: '22px',
+                fontWeight: 500,
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.5px'
+              }}>
+                SciSciNet Network Analysis
+              </h1>
+              <p style={{ 
+                margin: '4px 0 0 0',
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                fontWeight: 400
+              }}>
+                Virginia Tech CS Research Publications
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -74,13 +80,20 @@ function App() {
             gap: '24px',
             flexWrap: 'wrap',
             fontSize: '13px',
-            color: 'var(--text-tertiary)'
+            color: 'var(--text-tertiary)',
+            alignItems: 'center'
           }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Data Source: SciSciNet Open Dataset</span>
+            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Database size={14} /> Data Source: SciSciNet Open Dataset
+            </span>
             <span>•</span>
-            <span>Visualization: D3.js</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Network size={14} /> Visualization: D3.js
+            </span>
             <span>•</span>
-            <span>Community Detection: Louvain Algorithm</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GitBranch size={14} /> Community Detection: Louvain Algorithm
+            </span>
           </div>
           <div style={{ 
             marginTop: '12px',

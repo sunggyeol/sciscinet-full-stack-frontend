@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Loader2, AlertCircle, MousePointer2, Lightbulb } from 'lucide-react';
 import Timeline from './Timeline';
 import Histogram from './Histogram';
 
@@ -63,8 +64,10 @@ const CoordinatedDashboard = ({ apiBaseUrl }: CoordinatedDashboardProps) => {
         alignItems: 'center', 
         height: '400px',
         fontSize: '14px',
-        color: 'var(--text-secondary)'
+        color: 'var(--text-secondary)',
+        gap: '10px'
       }}>
+        <Loader2 className="animate-spin" size={20} />
         Loading dashboard...
       </div>
     );
@@ -79,7 +82,10 @@ const CoordinatedDashboard = ({ apiBaseUrl }: CoordinatedDashboardProps) => {
         borderRadius: '8px',
         color: 'var(--error)'
       }}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 500 }}>Error Loading Dashboard</h3>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AlertCircle size={20} />
+          Error Loading Dashboard
+        </h3>
         <p style={{ margin: 0, fontSize: '14px' }}>{error}</p>
       </div>
     );
@@ -115,6 +121,9 @@ const CoordinatedDashboard = ({ apiBaseUrl }: CoordinatedDashboardProps) => {
             borderRadius: '8px',
             border: '1px solid var(--border-light)'
           }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <MousePointer2 size={48} style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
+            </div>
             <h3 style={{ 
               color: 'var(--text-primary)', 
               marginBottom: '12px',
@@ -135,8 +144,13 @@ const CoordinatedDashboard = ({ apiBaseUrl }: CoordinatedDashboardProps) => {
               background: 'var(--accent-light)',
               borderRadius: '8px',
               maxWidth: '500px',
-              margin: '0 auto'
+              margin: '0 auto',
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-start',
+              textAlign: 'left'
             }}>
+              <Lightbulb size={20} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginTop: '2px' }} />
               <p style={{ 
                 margin: 0, 
                 fontSize: '13px',
