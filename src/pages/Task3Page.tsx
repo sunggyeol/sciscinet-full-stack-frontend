@@ -281,14 +281,14 @@ const Task3Page = ({ apiBaseUrl }: Task3PageProps) => {
           <input
             type="range"
             min="5"
-            max="50"
+            max="100"
             value={maxNodesPerCommunity}
             onChange={(e) => setMaxNodesPerCommunity(Number(e.target.value))}
             style={{ width: '100%', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             <span>5 (Small)</span>
-            <span>50 (Large)</span>
+            <span>100 (Large)</span>
           </div>
         </div>
 
@@ -306,14 +306,14 @@ const Task3Page = ({ apiBaseUrl }: Task3PageProps) => {
           <input
             type="range"
             min="5"
-            max="50"
+            max="100"
             value={maxCommunities}
             onChange={(e) => setMaxCommunities(Number(e.target.value))}
             style={{ width: '100%', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             <span>5 (Clean)</span>
-            <span>50 (Detailed)</span>
+            <span>100 (Detailed)</span>
           </div>
         </div>
 

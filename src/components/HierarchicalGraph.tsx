@@ -55,9 +55,9 @@ interface HierarchicalGraphProps {
   maxCommunityLabels?: number;
 }
 
-const HierarchicalGraph = ({ 
-  data, 
-  width = 1000, 
+const HierarchicalGraph = ({
+  data,
+  width = 1000,
   height = 1000,
   maxNodesPerCommunity = 20,
   maxCommunityLabels = 30
@@ -143,8 +143,10 @@ const HierarchicalGraph = ({
     const displayNodeIds = new Set(displayNodes.map(n => n.id));
     const displayLinks = data.links.filter(l => displayNodeIds.has(l.source) && displayNodeIds.has(l.target));
 
-    // Update display statistics
+    // Calculate display statistics
     const displayCommunityCount = new Set(displayNodes.map(n => n.community)).size;
+
+    // Update state for use in JSX
     setDisplayStats({
       nodes: displayNodes.length,
       links: displayLinks.length,
@@ -318,7 +320,7 @@ const HierarchicalGraph = ({
     // Add center text
     g.append('text')
       .attr('x', 0)
-      .attr('y', -10)
+      .attr('y', 0)
       .attr('text-anchor', 'middle')
       .style('font-size', '15px')
       .style('font-weight', '500')
@@ -327,19 +329,11 @@ const HierarchicalGraph = ({
 
     g.append('text')
       .attr('x', 0)
-      .attr('y', 10)
+      .attr('y', 20)
       .attr('text-anchor', 'middle')
       .style('font-size', '13px')
       .style('fill', 'var(--text-secondary)')
       .text(`${displayNodes.length} papers`);
-
-    g.append('text')
-      .attr('x', 0)
-      .attr('y', 28)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '13px')
-      .style('fill', 'var(--text-secondary)')
-      .text(`${displayStats.communities} communities`);
 
     return () => {
       tooltip.remove();
@@ -416,7 +410,7 @@ const HierarchicalGraph = ({
               color: 'var(--text-primary)',
               marginBottom: '8px'
             }}>
-              Displaying {displayStats.communities} of {data.total_communities} communities
+              Top {displayStats.communities} of {data.total_communities} communities
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {Array.from({ length: Math.min(10, displayStats.communities) }, (_, i) => (
@@ -429,7 +423,7 @@ const HierarchicalGraph = ({
                     borderRadius: '3px',
                     border: '1px solid var(--border-light)'
                   }} />
-                  <span style={{ 
+                  <span style={{
                     fontSize: '13px',
                     color: 'var(--text-secondary)'
                   }}>
